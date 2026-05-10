@@ -708,6 +708,10 @@ async function fetchNotesFromCloud() {
     } else {
       updateSyncStatus('❌ Error de servidor');
     }
+  } catch (e) {
+    updateSyncStatus('❌ Error de red');
+    console.log('Error de red al sincronizar:', e);
+  }
 }
 
 // Merge inteligente: combina notas sin duplicar (por fecha+texto)
