@@ -51,9 +51,10 @@ function renderInvestments(investments) {
   grid.innerHTML = investments.map(inv => {
     const risk = RISK_LEVELS[inv.risk];
     const cat = CATEGORIES[inv.category];
-    const perf = inv.performance.y1;
-    const perfClass = perf >= 0 ? 'positive' : 'negative';
-    const perfSign = perf >= 0 ? '+' : '';
+    const isRealTime = inv.realTime24h !== undefined;
+    const perfValue = isRealTime ? parseFloat(inv.realTime24h) : inv.performance.y1;
+    const perfClass = perfValue >= 0 ? 'positive' : 'negative';
+    const perfSign = perfValue > 0 ? '+' : (perfValue === 0 ? '' : '');
 
     return `
       <div class="card inv-card" onclick="showDetail('${inv.symbol}')" id="card-${inv.symbol}">
@@ -68,7 +69,7 @@ function renderInvestments(investments) {
         </div>
         <div class="inv-desc">${inv.description}</div>
         <div class="inv-card-footer">
-          <span class="inv-perf ${perfClass}">${perfSign}${perf}% <span style="color:var(--text-muted);font-weight:400;font-size:12px">1 año</span></span>
+          <span class="inv-perf ${perfClass}">${perfSign}${perfValue}% <span style="color:var(--text-muted);font-weight:400;font-size:12px">${isRealTime ? '24h (Real)' : '1 año'}</span></span>
           <div class="inv-risk" title="Riesgo: ${risk.label}"></div>
         </div>
         <canvas class="inv-sparkline" style="width:120px;height:40px"></canvas>
@@ -83,7 +84,9 @@ function renderInvestments(investments) {
       if (!card) return;
       const canvas = card.querySelector('.inv-sparkline');
       const riskContainer = card.querySelector('.inv-risk');
-      const color = inv.performance.y1 >= 0 ? '#00c853' : '#ff1744';
+      const isRealTime = inv.realTime24h !== undefined;
+      const perfValue = isRealTime ? parseFloat(inv.realTime24h) : inv.performance.y1;
+      const color = perfValue >= 0 ? '#00c853' : '#ff1744';
       drawSparkline(canvas, inv.sparkline, color);
       renderRiskDots(riskContainer, inv.risk);
     });
@@ -120,8 +123,8 @@ function showDetail(symbol) {
 
     <div class="detail-grid">
       <div class="card stat-card">
-        <div class="stat-value ${inv.performance.y1 >= 0 ? 'positive' : 'negative'}" style="color:${inv.performance.y1 >= 0 ? '#00c853' : '#ff1744'}">${inv.performance.y1 >= 0 ? '+' : ''}${inv.performance.y1}%</div>
-        <div class="stat-label">Rendimiento 1 año</div>
+        <div class="stat-value ${inv.realTime24h ? (parseFloat(inv.realTime24h) >= 0 ? 'positive' : 'negative') : (inv.performance.y1 >= 0 ? 'positive' : 'negative')}" style="color:${inv.realTime24h ? (parseFloat(inv.realTime24h) >= 0 ? '#00c853' : '#ff1744') : (inv.performance.y1 >= 0 ? '#00c853' : '#ff1744')}">${inv.realTime24h ? (parseFloat(inv.realTime24h) > 0 ? '+' : '') + inv.realTime24h : (inv.performance.y1 >= 0 ? '+' : '') + inv.performance.y1}%</div>
+        <div class="stat-label">${inv.realTime24h ? 'Rendimiento 24h (En vivo)' : 'Rendimiento 1 año'}</div>
       </div>
       <div class="card stat-card">
         <div class="stat-value ${inv.performance.y5 >= 0 ? 'positive' : 'negative'}" style="color:${inv.performance.y5 >= 0 ? '#00c853' : '#ff1744'}">${inv.performance.y5 >= 0 ? '+' : ''}${inv.performance.y5}%</div>
@@ -307,6 +310,7 @@ function toggleSettings() {
     modal.style.display = 'block';
     document.getElementById('gemini-api-key').value = localStorage.getItem('gemini_api_key') || '';
     document.getElementById('finnhub-api-key').value = localStorage.getItem('finnhub_api_key') || '';
+    document.getElementById('sync-key').value = localStorage.getItem('notes_sync_key') || '';
   } else {
     modal.style.display = 'none';
   }
@@ -315,28 +319,120 @@ function toggleSettings() {
 function saveSettings() {
   const gemini = document.getElementById('gemini-api-key').value.trim();
   const finnhub = document.getElementById('finnhub-api-key').value.trim();
+  const syncKey = document.getElementById('sync-key').value.trim();
+  
   if (gemini) localStorage.setItem('gemini_api_key', gemini);
   if (finnhub) localStorage.setItem('finnhub_api_key', finnhub);
+  if (syncKey) {
+    localStorage.setItem('notes_sync_key', syncKey);
+    // Trigger sync when key is saved
+    fetchNotesFromCloud();
+  }
+  
   toggleSettings();
   alert('Configuración guardada exitosamente.');
 }
 
-// Live Price Simulation (if no Finnhub key is used, just to make it feel alive)
+// Live Price Simulation (only affects items without real data)
 setInterval(() => {
-  document.querySelectorAll('.inv-perf').forEach(el => {
-    // Solo simulamos pequeñas fluctuaciones visuales para que se vea "vivo" si no hay API real
+  document.querySelectorAll('.inv-card').forEach(card => {
+    const symbolStr = card.querySelector('.inv-symbol').innerText;
+    const inv = getInvestment(symbolStr);
+    if (inv && inv.realTime24h) return; // Skip if real data exists
+    
     if (Math.random() > 0.7 && !localStorage.getItem('finnhub_api_key')) {
-      const isPos = el.classList.contains('positive');
-      const current = parseFloat(el.innerText.replace('%','').replace('+',''));
+      const el = card.querySelector('.inv-perf');
+      if (!el) return;
+      const spanInner = el.querySelector('span'); // The label span
+      const labelHtml = spanInner ? spanInner.outerHTML : '';
+      
+      const currentText = el.innerText.split(' ')[0].replace('%','').replace('+','');
+      const current = parseFloat(currentText);
       if (!isNaN(current)) {
         const change = (Math.random() * 0.2 - 0.1);
-        const next = (current + change).toFixed(1);
-        el.innerText = (next >= 0 ? '+' : '') + next + '%';
+        const next = (current + change).toFixed(2);
+        el.innerHTML = (next >= 0 ? '+' : '') + next + '% ' + labelHtml;
         el.className = 'inv-perf ' + (next >= 0 ? 'positive' : 'negative');
       }
     }
   });
 }, 3000);
+
+// ==========================================
+// REAL-TIME DATA FETCHING
+// ==========================================
+async function fetchRealMarketData() {
+  const finnhubKey = localStorage.getItem('finnhub_api_key');
+  const cacheKey = 'market_data_cache';
+  const cached = JSON.parse(localStorage.getItem(cacheKey) || '{"time":0, "data":{}}');
+  
+  const CACHE_TIME = 5 * 60 * 1000; // 5 minutes cache
+  const now = Date.now();
+  let marketData = cached.data;
+
+  // Si el caché expiró o no existe
+  if (now - cached.time > CACHE_TIME) {
+    marketData = {};
+    
+    // 1. Fetch Crypto (Binance API - Gratis y sin llave)
+    try {
+      const bRes = await fetch('https://api.binance.com/api/v3/ticker/24hr');
+      if (bRes.ok) {
+        const bData = await bRes.json();
+        bData.forEach(item => {
+          marketData['BINANCE:' + item.symbol] = parseFloat(item.priceChangePercent).toFixed(2);
+        });
+      }
+    } catch(e) {
+      console.log('Error cargando Binance', e);
+    }
+
+    // 2. Fetch Stocks/ETFs (Finnhub API - Requiere llave)
+    if (finnhubKey) {
+      // Tomamos solo Stocks y ETFs para no saturar el límite de 60/min de Finnhub
+      const finnhubItems = INVESTMENTS.filter(i => i.category === 'STOCK' || i.category === 'ETF');
+      
+      for (let inv of finnhubItems) {
+        try {
+          await new Promise(r => setTimeout(r, 150)); // Delay para evitar bloqueo
+          const res = await fetch(`https://finnhub.io/api/v1/quote?symbol=${inv.symbol}&token=${finnhubKey}`);
+          if (res.ok) {
+            const data = await res.json();
+            if (data.dp !== undefined && data.dp !== null) {
+              marketData[inv.symbol] = data.dp.toFixed(2);
+            }
+          }
+        } catch(e) {
+          console.log('Error Finnhub en', inv.symbol);
+        }
+      }
+    }
+    
+    localStorage.setItem(cacheKey, JSON.stringify({ time: now, data: marketData }));
+  }
+
+  // Aplicar datos reales al catálogo
+  let updated = false;
+  INVESTMENTS.forEach(inv => {
+    if (inv.category === 'CRYPTO') {
+      const bSym = 'BINANCE:' + inv.symbol + 'USDT';
+      if (marketData[bSym]) {
+        inv.realTime24h = marketData[bSym];
+        updated = true;
+      }
+    } else {
+      if (marketData[inv.symbol]) {
+        inv.realTime24h = marketData[inv.symbol];
+        updated = true;
+      }
+    }
+  });
+
+  // Re-renderizar si hubo cambios
+  if (updated && currentSection === 'dashboard') {
+    renderDashboard();
+  }
+}
 
 // ==========================================
 // PLAN GENERATOR
@@ -493,7 +589,7 @@ function loadNotes() {
   const notes = JSON.parse(localStorage.getItem('user_notes_array') || '[]');
   
   if (notes.length === 0) {
-    container.innerHTML = '<p style="color:var(--text-secondary);text-align:center;font-style:italic">Aún no tienes notas. ¡Escribe la primera arriba!</p>';
+    container.innerHTML = '<p style="color:var(--text-secondary);text-align:center;font-style:italic">Aún no tienes notas o se están sincronizando...</p>';
     return;
   }
 
@@ -506,6 +602,52 @@ function loadNotes() {
       <div style="white-space:pre-wrap;font-size:14px;color:var(--text-primary);line-height:1.5">${note.text}</div>
     </div>
   `).join('');
+}
+
+// ==========================================
+// CLOUD SYNC LOGIC
+// ==========================================
+const SYNC_BUCKET = 'bot_etoro_sync_v1';
+
+async function syncNotesToCloud() {
+  const syncKey = localStorage.getItem('notes_sync_key');
+  if (!syncKey) return;
+
+  const notes = localStorage.getItem('user_notes_array') || '[]';
+  
+  try {
+    const res = await fetch(`https://kvdb.io/${SYNC_BUCKET}/${syncKey}`, {
+      method: 'POST',
+      body: notes
+    });
+    if (!res.ok) console.error('Cloud sync failed');
+  } catch (e) {
+    console.error('Sync Error:', e);
+  }
+}
+
+async function fetchNotesFromCloud() {
+  const syncKey = localStorage.getItem('notes_sync_key');
+  if (!syncKey) return;
+
+  try {
+    const res = await fetch(`https://kvdb.io/${SYNC_BUCKET}/${syncKey}`);
+    if (res.ok) {
+      const cloudNotes = await res.json();
+      if (Array.isArray(cloudNotes)) {
+        // Simple merge: For now we take the cloud as source of truth if it has data
+        const localNotes = JSON.parse(localStorage.getItem('user_notes_array') || '[]');
+        
+        // Only update if cloud has more or different data
+        if (JSON.stringify(cloudNotes) !== JSON.stringify(localNotes)) {
+          localStorage.setItem('user_notes_array', JSON.stringify(cloudNotes));
+          loadNotes();
+        }
+      }
+    }
+  } catch (e) {
+    console.log('No hay notas en la nube aún o error de red');
+  }
 }
 
 function saveNewNote() {
@@ -528,6 +670,9 @@ function saveNewNote() {
   
   input.value = ''; // Clear input
   loadNotes(); // Reload list
+  
+  // Sync to cloud
+  syncNotesToCloud();
 }
 
 function deleteNote(index) {
@@ -536,6 +681,7 @@ function deleteNote(index) {
     notes.splice(index, 1);
     localStorage.setItem('user_notes_array', JSON.stringify(notes));
     loadNotes();
+    syncNotesToCloud();
   }
 }
 
@@ -563,6 +709,10 @@ function initApp() {
 
   // Initial load of notes
   loadNotes();
+  fetchNotesFromCloud(); // Try to get from cloud on start
+
+  // Load Real Data automatically
+  fetchRealMarketData();
 
   // If we want to start on dashboard by default, we could do it here, but Hero is default.
 }

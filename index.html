@@ -5,8 +5,14 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="description" content="Asesor de inversiones inteligente para eToro. Inversiones seguras explicadas de forma simple para principiantes en Costa Rica.">
   <title>Asesor de Inversiones — Estrategias para eToro</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/styles.css">
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📈</text></svg>">
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E📈%3C/text%3E%3C/svg%3E">
+  <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E📈%3C/text%3E%3C/svg%3E">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 </head>
 <body>
 
@@ -144,7 +150,10 @@
           </div>
         </div>
 
-        <h3 style="margin-bottom:16px;font-size:20px;border-bottom:1px solid rgba(255,255,255,0.1);padding-bottom:8px">Tus Notas Anteriores</h3>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;border-bottom:1px solid rgba(255,255,255,0.1);padding-bottom:8px">
+          <h3 style="margin:0;font-size:20px">Tus Notas Anteriores</h3>
+          <button class="btn btn-secondary" style="padding:4px 12px;font-size:12px" onclick="fetchNotesFromCloud()">🔄 Sincronizar Nube</button>
+        </div>
         <div id="notes-list">
           <!-- Notes will be generated here -->
         </div>
@@ -200,9 +209,15 @@
         <a href="https://aistudio.google.com/app/apikey" target="_blank" style="font-size:11px;color:var(--accent-green);text-decoration:none">Obtener clave gratuita de Gemini →</a>
       </div>
 
-      <div style="margin-bottom:24px">
+      <div style="margin-bottom:16px">
         <label style="display:block;font-size:12px;margin-bottom:6px;color:var(--text-secondary)">Finnhub API Key (Para datos en vivo - Opcional)</label>
         <input type="password" id="finnhub-api-key" class="search-box" style="margin-bottom:4px;padding:10px" placeholder="Opcional...">
+      </div>
+
+      <div style="margin-bottom:24px">
+        <label style="display:block;font-size:12px;margin-bottom:6px;color:var(--text-secondary)">Clave de Sincronización (Para Bitácora entre PC/Móvil)</label>
+        <input type="password" id="sync-key" class="search-box" style="margin-bottom:4px;padding:10px" placeholder="Ej: mi-clave-secreta-123">
+        <p style="font-size:10px;color:var(--text-muted);margin-top:4px">Usá la misma clave en tu celular para ver tus notas allá.</p>
       </div>
 
       <button class="btn btn-primary" style="width:100%;justify-content:center" onclick="saveSettings()">Guardar Configuración</button>
