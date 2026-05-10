@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Asesor de inversiones inteligente para eToro. Inversiones seguras explicadas de forma simple para principiantes en Costa Rica.">
+  <title>Asesor de Inversiones — Estrategias para eToro</title>
+  <link rel="stylesheet" href="css/styles.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📈</text></svg>">
+</head>
+<body>
+
+  <!-- Loader -->
+  <div id="loader">
+    <div class="loader-icon"></div>
+    <p class="loader-text">Cargando tu asesor de inversiones...</p>
+  </div>
+
+  <!-- Background -->
+  <div class="bg-grid"></div>
+  <div class="bg-glow"></div>
+
+  <!-- Navigation -->
+  <nav class="nav">
+    <a class="nav-brand" onclick="navigateTo('hero')" style="gap: 6px">
+      <span style="color:#00c853">👤</span><span>Asesor</span> de Inversiones
+    </a>
+    <div class="nav-links">
+      <button class="nav-link active" data-section="hero" onclick="navigateTo('hero')">Inicio</button>
+      <button class="nav-link" data-section="dashboard" onclick="navigateTo('dashboard')">Inversiones</button>
+      <button class="nav-link" data-section="plan" onclick="navigateTo('plan')">Estrategias</button>
+      <button class="nav-link" data-section="notes" onclick="navigateTo('notes')">Bitácora</button>
+      <button class="nav-link" data-section="guide" onclick="navigateTo('guide')">Educación</button>
+    </div>
+  </nav>
+
+  <main>
+
+    <!-- HERO SECTION -->
+    <div id="section-hero" class="section active">
+      <div class="hero">
+        <h1>Tu Asesor de <span class="highlight">Inversiones Inteligente</span></h1>
+        <p>Inversiones seguras en eToro, explicadas de forma simple. Sin jerga complicada, sin promesas falsas. Solo estrategias inteligentes para hacer crecer tu dinero.</p>
+      </div>
+
+      <!-- Feature cards -->
+      <div class="info-cards" style="max-width:900px;margin:40px auto 0">
+        <div class="card info-card" style="text-align:center">
+          <div class="info-card-icon">🎯</div>
+          <h4>Inversiones Verificadas</h4>
+          <p>Solo activos reales disponibles en eToro. Cada inversión es verificada antes de recomendarla.</p>
+        </div>
+        <div class="card info-card" style="text-align:center">
+          <div class="info-card-icon">🧠</div>
+          <h4>Asesor Inteligente</h4>
+          <p>Un chatbot que responde tus dudas en español simple. Sin jerga técnica, solo respuestas claras.</p>
+        </div>
+        <div class="card info-card" style="text-align:center">
+          <div class="info-card-icon" style="color:var(--accent-green);font-family:'Outfit',sans-serif;font-weight:800;font-size:32px">eToro</div>
+          <h4>Directo a eToro</h4>
+          <p>Cada inversión te lleva directamente a la plataforma oficial. Usá el símbolo correcto sin equivocarte.</p>
+        </div>
+      </div>
+
+      <div class="disclaimer" style="margin-top:48px">
+        <strong>⚠️ Aviso Legal:</strong> Esta plataforma es una herramienta educativa y de asesoramiento. No gestiona dinero real ni ejecuta operaciones. Las inversiones se realizan directamente en eToro. Todo capital invertido está en riesgo. Rendimientos pasados no garantizan resultados futuros. Consultá con un profesional financiero antes de invertir.
+      </div>
+    </div>
+
+    <!-- DASHBOARD SECTION -->
+    <div id="section-dashboard" class="section">
+      <h2 style="font-size:28px;margin-bottom:4px">💼 Catálogo de Inversiones</h2>
+      <p style="color:var(--text-secondary);margin-bottom:24px">Inversiones verificadas y disponibles en eToro para Costa Rica</p>
+
+      <div class="search-wrap">
+        <span class="search-icon">🔍</span>
+        <input type="text" id="search-input" class="search-box" placeholder="Buscar por nombre, símbolo o sector...">
+      </div>
+
+      <div class="filters">
+        <button class="filter-btn active" onclick="setFilter('all', this)">Todas</button>
+        <button class="filter-btn" onclick="setFilter('ETF', this)">⌬ ETFs</button>
+        <button class="filter-btn" onclick="setFilter('STOCK', this)">◈ Acciones</button>
+        <button class="filter-btn" onclick="setFilter('COMMODITY', this)">⬢ Commodities</button>
+        <button class="filter-btn" onclick="setFilter('CRYPTO', this)">₿ Criptos</button>
+      </div>
+
+      <div id="inv-grid" class="inv-grid"></div>
+    </div>
+
+    <!-- DETAIL SECTION -->
+    <div id="section-detail" class="section">
+      <div id="detail-content"></div>
+    </div>
+
+    <!-- PLAN GENERATOR SECTION -->
+    <div id="section-plan" class="section">
+      <div class="quiz-container" style="max-width:800px">
+        <h2 style="font-size:28px;margin-bottom:4px;text-align:center">🛠️ Creador de Planes Inteligente</h2>
+        <p style="color:var(--text-secondary);margin-bottom:32px;text-align:center">Ingresá tus datos para generar una estrategia personalizada instantánea.</p>
+        
+        <div class="card" style="margin-bottom:24px">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:20px">
+            <div>
+              <label style="display:block;margin-bottom:8px;font-size:14px;color:var(--text-secondary)">Monto a Invertir (USD):</label>
+              <input type="number" id="plan-amount" class="search-box" style="width:100%" placeholder="Ej: 500" value="500">
+            </div>
+            <div>
+              <label style="display:block;margin-bottom:8px;font-size:14px;color:var(--text-secondary)">Plazo de Retiro:</label>
+              <select id="plan-timeframe" class="search-box" style="width:100%;cursor:pointer">
+                <option value="15_dias">15 Días (Quincena)</option>
+                <option value="1_mes">1 Mes</option>
+                <option value="6_meses">6 Meses</option>
+                <option value="1_ano">1 Año o más</option>
+              </select>
+            </div>
+          </div>
+          <div style="margin-bottom:24px">
+            <label style="display:block;margin-bottom:8px;font-size:14px;color:var(--text-secondary)">Tolerancia al Riesgo:</label>
+            <select id="plan-risk" class="search-box" style="width:100%;cursor:pointer">
+              <option value="conservador">Bajo (Proteger mi dinero)</option>
+              <option value="moderado" selected>Medio (Ganancias estables)</option>
+              <option value="agresivo">Alto (Quiero ganancias rápidas)</option>
+            </select>
+          </div>
+          <button class="btn btn-primary" style="width:100%;justify-content:center" onclick="generateCustomPlan()">🪄 Generar Estrategia</button>
+        </div>
+
+        <div id="plan-result" style="display:none"></div>
+      </div>
+    </div>
+
+    <!-- NOTES SECTION -->
+    <div id="section-notes" class="section">
+      <div class="quiz-container" style="max-width:800px;text-align:left">
+        <h2 style="font-size:28px;margin-bottom:4px;text-align:center">📝 Mi Bitácora de Inversiones</h2>
+        <p style="color:var(--text-secondary);margin-bottom:32px;text-align:center">Lleva un registro diario de tus decisiones, ideas y planes de inversión.</p>
+        
+        <div class="card" style="margin-bottom:30px">
+          <h4 style="margin-bottom:12px;color:var(--text-primary)">Escribir nueva nota</h4>
+          <textarea id="new-note-text" class="search-box" style="width:100%;height:150px;padding:15px;font-family:inherit;font-size:14px;line-height:1.5;resize:vertical;margin-bottom:12px" placeholder="Ej: Hoy decidí comprar 50% NVIDIA y 50% SPY porque..."></textarea>
+          <div style="display:flex;justify-content:flex-end">
+            <button class="btn btn-primary" onclick="saveNewNote()">💾 Guardar Nota</button>
+          </div>
+        </div>
+
+        <h3 style="margin-bottom:16px;font-size:20px;border-bottom:1px solid rgba(255,255,255,0.1);padding-bottom:8px">Tus Notas Anteriores</h3>
+        <div id="notes-list">
+          <!-- Notes will be generated here -->
+        </div>
+      </div>
+    </div>
+
+    <!-- GUIDE SECTION -->
+    <div id="section-guide" class="section">
+      <div id="guide-content"></div>
+    </div>
+
+  </main>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="disclaimer">
+      <strong>⚠️ Aviso Legal:</strong> InvertíCR es una herramienta educativa. No es un broker ni gestiona dinero real. Las inversiones se realizan en <a href="https://www.etoro.com" target="_blank">eToro</a>. Todo capital invertido está en riesgo. Rendimientos pasados no garantizan resultados futuros. Los datos mostrados son aproximados y pueden no reflejar precios en tiempo real. Esta plataforma no tiene afiliación oficial con eToro.
+    </div>
+  </footer>
+
+  <!-- Chat Toggle -->
+  <button class="chat-toggle" id="chat-toggle" onclick="toggleChat()">🤖</button>
+  <div class="chat-panel" id="chat-panel">
+    <div class="chat-header" id="chat-header" style="padding: 16px 20px; border-bottom: 2px solid var(--accent-green); position: relative; cursor: move; user-select: none;">
+      <div class="chat-avatar" style="width: 44px; height: 44px; font-size: 22px;">🤖</div>
+      <div class="chat-header-info" style="display: flex; align-items: center;">
+        <h4 style="font-size: 20px; margin: 0;">Asesor de Inversiones</h4>
+      </div>
+      <button onclick="toggleChat()" style="position: absolute; right: 16px; top: 16px; background: none; border: none; color: var(--text-secondary); font-size: 16px; cursor: pointer; padding: 4px; border-radius: 50%; display: flex; align-items: center; justify-content: center; transition: 0.2s;" onmouseover="this.style.color='var(--accent-red)'" onmouseout="this.style.color='var(--text-secondary)'">✕</button>
+    </div>
+    <div class="chat-messages" id="chat-messages"></div>
+    <div id="chat-suggestions" class="chat-suggestions"></div>
+    <div class="chat-input-wrap">
+      <input type="text" id="chat-input" class="chat-input" placeholder="Preguntame sobre inversiones...">
+      <button class="chat-send" onclick="sendChatMessage()">Enviar</button>
+    </div>
+  </div>
+
+  <!-- Settings Modal -->
+  <div id="settings-modal" class="chat-panel" style="bottom:50%;right:50%;transform:translate(50%,50%);width:400px;max-height:90vh;z-index:999;box-shadow:0 0 0 100vw rgba(0,0,0,0.7);display:none;">
+    <div class="chat-header">
+      <div class="chat-header-info">
+        <h4>⚙️ Configuración Avanzada (IA y Datos)</h4>
+      </div>
+      <button onclick="toggleSettings()" style="background:none;border:none;color:#fff;cursor:pointer;font-size:20px;margin-left:auto">✕</button>
+    </div>
+    <div style="padding:20px;overflow-y:auto;display:block;">
+      <p style="font-size:13px;color:var(--text-secondary);margin-bottom:16px">Para usar la IA Real y obtener planes detallados, pega tu API Key de Gemini. Es gratuita.</p>
+      
+      <div style="margin-bottom:16px">
+        <label style="display:block;font-size:12px;margin-bottom:6px;color:var(--text-secondary)">Gemini API Key (Para el Chatbot y Planes)</label>
+        <input type="password" id="gemini-api-key" class="search-box" style="margin-bottom:4px;padding:10px" placeholder="AIzaSy...">
+        <a href="https://aistudio.google.com/app/apikey" target="_blank" style="font-size:11px;color:var(--accent-green);text-decoration:none">Obtener clave gratuita de Gemini →</a>
+      </div>
+
+      <div style="margin-bottom:24px">
+        <label style="display:block;font-size:12px;margin-bottom:6px;color:var(--text-secondary)">Finnhub API Key (Para datos en vivo - Opcional)</label>
+        <input type="password" id="finnhub-api-key" class="search-box" style="margin-bottom:4px;padding:10px" placeholder="Opcional...">
+      </div>
+
+      <button class="btn btn-primary" style="width:100%;justify-content:center" onclick="saveSettings()">Guardar Configuración</button>
+    </div>
+  </div>
+
+  <!-- Mobile Navigation -->
+  <nav class="mobile-nav">
+    <button class="mobile-nav-btn" data-section="hero" onclick="navigateTo('hero')">
+      <span class="icon">⌂</span>Inicio
+    </button>
+    <button class="mobile-nav-btn" data-section="dashboard" onclick="navigateTo('dashboard')">
+      <span class="icon">⊞</span>Activos
+    </button>
+    <button class="mobile-nav-btn" data-section="plan" onclick="navigateTo('plan')">
+      <span class="icon">⚡</span>Plan
+    </button>
+    <button class="mobile-nav-btn" data-section="notes" onclick="navigateTo('notes')">
+      <span class="icon">✎</span>Notas
+    </button>
+    <button class="mobile-nav-btn" data-section="guide" onclick="navigateTo('guide')">
+      <span class="icon">ⓘ</span>Info
+    </button>
+  </nav>
+
+  <!-- Scripts -->
+  <script src="js/data.js"></script>
+  <script src="js/charts.js"></script>
+  <script src="js/advisor.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
