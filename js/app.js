@@ -429,8 +429,16 @@ async function fetchRealMarketData() {
   });
 
   // Re-renderizar si hubo cambios
-  if (updated && currentSection === 'dashboard') {
-    renderDashboard();
+  if (updated) {
+    const liveIndicator = document.getElementById('market-live-indicator');
+    if (liveIndicator) {
+      liveIndicator.style.display = 'inline-flex';
+      liveIndicator.title = 'Datos actualizados desde Binance/Finnhub';
+    }
+    
+    if (currentSection === 'dashboard') {
+      renderDashboard();
+    }
   }
 }
 
@@ -605,49 +613,119 @@ function loadNotes() {
 }
 
 // ==========================================
-// CLOUD SYNC LOGIC
+// CLOUD SYNC LOGIC (Firebase Realtime DB)
 // ==========================================
-const SYNC_BUCKET = 'bot_etoro_sync_v1';
+const FIREBASE_DB_URL = 'https://bot-etoro-notes-default-rtdb.firebaseio.com';
+
+// Genera un ID seguro a partir de la clave del usuario
+function getSyncPath() {
+  const syncKey = localStorage.getItem('notes_sync_key');
+  if (!syncKey) return null;
+  // Crear un hash simple de la clave para usarla como ruta en Firebase
+  let hash = 0;
+  for (let i = 0; i < syncKey.length; i++) {
+    const ch = syncKey.charCodeAt(i);
+    hash = ((hash << 5) - hash) + ch;
+    hash |= 0;
+  }
+  // Usar la clave sanitizada + hash para mayor unicidad
+  const sanitized = syncKey.replace(/[^a-zA-Z0-9]/g, '_');
+  return `notes/${sanitized}_${Math.abs(hash)}`;
+}
 
 async function syncNotesToCloud() {
-  const syncKey = localStorage.getItem('notes_sync_key');
-  if (!syncKey) return;
+  const path = getSyncPath();
+  if (!path) return;
 
-  const notes = localStorage.getItem('user_notes_array') || '[]';
+  const notes = JSON.parse(localStorage.getItem('user_notes_array') || '[]');
   
   try {
-    const res = await fetch(`https://kvdb.io/${SYNC_BUCKET}/${syncKey}`, {
-      method: 'POST',
-      body: notes
+    const res = await fetch(`${FIREBASE_DB_URL}/${path}.json`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ notes: notes, lastUpdated: Date.now() })
     });
-    if (!res.ok) console.error('Cloud sync failed');
+    if (res.ok) {
+      updateSyncStatus('✅ Sincronizado');
+      console.log('✅ Notas sincronizadas a la nube');
+    } else {
+      updateSyncStatus('❌ Error al subir');
+      console.error('❌ Cloud sync failed:', res.status);
+    }
   } catch (e) {
+    updateSyncStatus('❌ Error de red');
     console.error('Sync Error:', e);
   }
 }
 
+function updateSyncStatus(msg) {
+  const statusEl = document.getElementById('sync-status-msg');
+  if (statusEl) {
+    statusEl.innerText = msg;
+    statusEl.style.opacity = '1';
+    setTimeout(() => { statusEl.style.opacity = '0.7'; }, 3000);
+  }
+}
+
 async function fetchNotesFromCloud() {
-  const syncKey = localStorage.getItem('notes_sync_key');
-  if (!syncKey) return;
+  const path = getSyncPath();
+  if (!path) {
+    console.log('No hay clave de sincronización configurada');
+    return;
+  }
+
+  updateSyncStatus('⏳ Sincronizando...');
 
   try {
-    const res = await fetch(`https://kvdb.io/${SYNC_BUCKET}/${syncKey}`);
+    const res = await fetch(`${FIREBASE_DB_URL}/${path}.json`);
     if (res.ok) {
-      const cloudNotes = await res.json();
-      if (Array.isArray(cloudNotes)) {
-        // Simple merge: For now we take the cloud as source of truth if it has data
+      const data = await res.json();
+      if (data && data.notes && Array.isArray(data.notes)) {
         const localNotes = JSON.parse(localStorage.getItem('user_notes_array') || '[]');
         
-        // Only update if cloud has more or different data
-        if (JSON.stringify(cloudNotes) !== JSON.stringify(localNotes)) {
-          localStorage.setItem('user_notes_array', JSON.stringify(cloudNotes));
+        // Merge inteligente: combina notas de ambos lados sin duplicados
+        const merged = mergeNotes(localNotes, data.notes);
+        
+        if (JSON.stringify(merged) !== JSON.stringify(localNotes)) {
+          localStorage.setItem('user_notes_array', JSON.stringify(merged));
           loadNotes();
+          // Subir el resultado del merge para que ambos dispositivos estén igual
+          syncNotesToCloud();
+        } else {
+          updateSyncStatus('✅ Todo al día');
         }
+        console.log('✅ Notas descargadas de la nube');
+      } else {
+        // No hay notas en la nube, subimos las locales
+        const localNotes = JSON.parse(localStorage.getItem('user_notes_array') || '[]');
+        if (localNotes.length > 0) {
+          syncNotesToCloud();
+        } else {
+          updateSyncStatus('ℹ️ Sin notas');
+        }
+        console.log('ℹ️ No hay notas en la nube aún');
       }
+    } else {
+      updateSyncStatus('❌ Error de servidor');
     }
-  } catch (e) {
-    console.log('No hay notas en la nube aún o error de red');
+}
+
+// Merge inteligente: combina notas sin duplicar (por fecha+texto)
+function mergeNotes(localNotes, cloudNotes) {
+  const seen = new Set();
+  const merged = [];
+  
+  // Agregar todas las notas, evitando duplicados por contenido+fecha
+  const all = [...cloudNotes, ...localNotes];
+  for (const note of all) {
+    const key = note.date + '|' + note.text;
+    if (!seen.has(key)) {
+      seen.add(key);
+      merged.push(note);
+    }
   }
+  
+  return merged;
 }
 
 function saveNewNote() {

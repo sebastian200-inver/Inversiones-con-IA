@@ -431,3 +431,8 @@ main { position: relative; z-index: 1; padding-top: 64px; min-height: 100vh; }
   0%, 60%, 100% { transform: translateY(0); }
   30% { transform: translateY(-6px); }
 }
+@keyframes pulse {
+  0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(0, 200, 83, 0.7); }
+  70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(0, 200, 83, 0); }
+  100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(0, 200, 83, 0); }
+}
