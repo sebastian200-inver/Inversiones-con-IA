@@ -230,45 +230,53 @@ document.addEventListener('DOMContentLoaded', () => {
   let isDragging = false;
   let offsetX, offsetY;
 
-  chatHeader.addEventListener('mousedown', (e) => {
-    // Don't drag if clicking the close button
+  function dragStart(e) {
     if (e.target.tagName === 'BUTTON' || e.target.closest('button')) return;
     
     isDragging = true;
+    const clientX = e.type.includes('mouse') ? e.clientX : e.touches[0].clientX;
+    const clientY = e.type.includes('mouse') ? e.clientY : e.touches[0].clientY;
+    
     const rect = chatPanel.getBoundingClientRect();
-    offsetX = e.clientX - rect.left;
-    offsetY = e.clientY - rect.top;
+    offsetX = clientX - rect.left;
+    offsetY = clientY - rect.top;
     
-    // Temporarily disable transition for smooth dragging
     chatPanel.style.transition = 'none';
-  });
+  }
 
-  document.addEventListener('mousemove', (e) => {
+  function dragMove(e) {
     if (!isDragging) return;
+    // Prevent scrolling on mobile while dragging the chat
+    if (e.type.includes('touch')) e.preventDefault();
     
-    let newX = e.clientX - offsetX;
-    let newY = e.clientY - offsetY;
+    const clientX = e.type.includes('mouse') ? e.clientX : e.touches[0].clientX;
+    const clientY = e.type.includes('mouse') ? e.clientY : e.touches[0].clientY;
     
-    // Prevent dragging off screen
+    let newX = clientX - offsetX;
+    let newY = clientY - offsetY;
+    
     const maxX = window.innerWidth - chatPanel.offsetWidth;
     const maxY = window.innerHeight - chatPanel.offsetHeight;
     
     newX = Math.max(0, Math.min(newX, maxX));
     newY = Math.max(0, Math.min(newY, maxY));
     
-    // Override right/bottom positioning with explicit left/top
     chatPanel.style.right = 'auto';
     chatPanel.style.bottom = 'auto';
     chatPanel.style.left = newX + 'px';
     chatPanel.style.top = newY + 'px';
-  });
+  }
 
-  document.addEventListener('mouseup', () => {
-    if (isDragging) {
-      isDragging = false;
-      // Re-enable any transitions if needed, or keep none
-    }
-  });
+  function dragEnd() {
+    isDragging = false;
+  }
+
+  chatHeader.addEventListener('mousedown', dragStart);
+  chatHeader.addEventListener('touchstart', dragStart, {passive: false});
+  document.addEventListener('mousemove', dragMove);
+  document.addEventListener('touchmove', dragMove, {passive: false});
+  document.addEventListener('mouseup', dragEnd);
+  document.addEventListener('touchend', dragEnd);
 });
 
 function renderSuggestions() {

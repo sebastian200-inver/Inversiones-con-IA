@@ -386,7 +386,7 @@ main { position: relative; z-index: 1; padding-top: 64px; min-height: 100vh; }
   .hero p { font-size: 15px; }
   .inv-grid { grid-template-columns: 1fr; }
   .detail-grid { grid-template-columns: 1fr 1fr; }
-  .chat-panel { right: 8px; left: 8px; width: auto; bottom: 80px; max-height: calc(100vh - 100px); }
+  .chat-panel { right: 8px; left: 8px; width: auto; bottom: 80px; height: 75vh; min-height: 350px; max-height: calc(100vh - 100px); }
   .section { padding: 24px 16px; }
   .detail-header { flex-direction: column; }
 }
